@@ -1,5 +1,5 @@
 name: pqdoctor
-description: Post-quantum TLS checks in CI — which of your hosts negotiate hybrid ML-KEM, why the rest don't (config, library or provider), SARIF for code scanning, regressions, and an optional push to a pqdoctor fleet.
+description: "Post-quantum TLS checks in CI: which hosts use hybrid ML-KEM, why the rest don't, and ML-DSA certificate readiness."
 author: Kalyan Gopalam
 branding:
   icon: shield

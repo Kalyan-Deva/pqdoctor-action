@@ -1,0 +1,138 @@
+name: pqdoctor
+description: Post-quantum TLS checks in CI — which of your hosts negotiate hybrid ML-KEM, why the rest don't (config, library or provider), SARIF for code scanning, regressions, and an optional push to a pqdoctor fleet.
+author: Kalyan Gopalam
+branding:
+  icon: shield
+  color: orange
+
+inputs:
+  hosts:
+    description: Hosts to check, one per line or comma-separated. host, host:port, [v6]:port, or ssh://host[:port] for an SSH server.
+    required: false
+    default: ""
+  hosts-file:
+    description: A file with more hosts (e.g. from `pqdoctor inventory`), one per line, `#` comments.
+    required: false
+    default: ""
+  fail-on:
+    description: "not-pq (default): fail when a host answers but isn't post-quantum. not-pq-or-unreachable: unreachable fails too. regression: fail only when a host that was post-quantum in the last run isn't now. never: report only."
+    required: false
+    default: not-pq
+  fingerprint:
+    description: "true (default): for hosts that aren't post-quantum, say why one level down — config, library or provider."
+    required: false
+    default: "true"
+  certificates:
+    description: "true (default): also read each TLS host's certificate chain — ML-DSA readiness and whether the chain would still fit with ML-DSA (2 more connections a host)."
+    required: false
+    default: "true"
+  version:
+    description: The pqdoctor release to install (prebuilt, verified against the release's SHA256SUMS.txt).
+    required: false
+    default: "0.3.0"
+  install:
+    description: "release (default): download the prebuilt binary. source: build that version from crates.io with cargo (needs Rust 1.85+)."
+    required: false
+    default: release
+  upload-sarif:
+    description: "true: upload the SARIF to GitHub code scanning (needs `permissions: security-events: write`)."
+    required: false
+    default: "false"
+  comment:
+    description: "true: on a pull request, add (or update) one comment with the results. Needs `permissions: pull-requests: write`."
+    required: false
+    default: "false"
+  fleet-url:
+    description: A pqdoctor fleet to push the run (and its leverage plan) to, e.g. https://fleet.example.com.
+    required: false
+    default: ""
+  fleet-token:
+    description: The fleet's ingest token (pass a secret).
+    required: false
+    default: ""
+  owners:
+    description: An owners.toml mapping hosts to teams, for the fleet push.
+    required: false
+    default: ""
+  github-token:
+    description: Token for the pull request comment.
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  pq:
+    description: How many hosts negotiate post-quantum key exchange.
+    value: ${{ steps.check.outputs.pq }}
+  total:
+    description: How many hosts were checked.
+    value: ${{ steps.check.outputs.total }}
+  regressions:
+    description: Hosts that were post-quantum in the last run and aren't now.
+    value: ${{ steps.check.outputs.regressions }}
+  report:
+    description: Path to a JSON file with every report.
+    value: ${{ steps.check.outputs.report }}
+  results:
+    description: Path to the scan records (JSONL) — for pqdoctor diff, plan, tickets or push.
+    value: ${{ steps.check.outputs.results }}
+  sarif:
+    description: Path to the SARIF file.
+    value: ${{ steps.check.outputs.sarif }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install pqdoctor (prebuilt, checksum-verified)
+      if: inputs.install == 'release'
+      id: release
+      shell: bash
+      run: echo "bin=$(node "$GITHUB_ACTION_PATH/install.mjs" "${{ inputs.version }}" "$RUNNER_TEMP/pqdoctor-bin")" >> "$GITHUB_OUTPUT"
+    - name: Cache the pqdoctor build
+      if: inputs.install == 'source'
+      uses: actions/cache@v4
+      with:
+        path: ${{ runner.temp }}/pqdoctor-src
+        key: pqdoctor-src-${{ runner.os }}-${{ runner.arch }}-${{ inputs.version }}
+    - name: Build pqdoctor from source (crates.io)
+      if: inputs.install == 'source'
+      id: source
+      shell: bash
+      run: |
+        cargo install pqdoctor --version "${{ inputs.version }}" --locked --root "$RUNNER_TEMP/pqdoctor-src"
+        echo "bin=$RUNNER_TEMP/pqdoctor-src/bin/pqdoctor${{ runner.os == 'Windows' && '.exe' || '' }}" >> "$GITHUB_OUTPUT"
+    # The last run's records, so "regression" can compare (one cache entry per repository + host list).
+    - name: Restore the last run
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ runner.temp }}/pqdoctor-baseline.jsonl
+        key: pqdoctor-baseline-${{ github.repository }}-${{ hashFiles(inputs.hosts-file) }}-${{ github.run_id }}
+        restore-keys: pqdoctor-baseline-${{ github.repository }}-${{ hashFiles(inputs.hosts-file) }}-
+    - name: Check the hosts
+      id: check
+      shell: bash
+      env:
+        INPUT_HOSTS: ${{ inputs.hosts }}
+        INPUT_HOSTS_FILE: ${{ inputs.hosts-file }}
+        INPUT_FAIL_ON: ${{ inputs.fail-on }}
+        INPUT_FINGERPRINT: ${{ inputs.fingerprint }}
+        INPUT_CERTIFICATES: ${{ inputs.certificates }}
+        INPUT_COMMENT: ${{ inputs.comment }}
+        INPUT_BASELINE: ${{ runner.temp }}/pqdoctor-baseline.jsonl
+        INPUT_FLEET_URL: ${{ inputs.fleet-url }}
+        INPUT_OWNERS: ${{ inputs.owners }}
+        FLEET_TOKEN: ${{ inputs.fleet-token }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        PQDOCTOR: ${{ steps.release.outputs.bin || steps.source.outputs.bin }}
+      run: node "$GITHUB_ACTION_PATH/run.mjs"
+    - name: Save this run for next time
+      if: always()
+      uses: actions/cache/save@v4
+      with:
+        path: ${{ runner.temp }}/pqdoctor-baseline.jsonl
+        key: pqdoctor-baseline-${{ github.repository }}-${{ hashFiles(inputs.hosts-file) }}-${{ github.run_id }}
+    - name: Upload SARIF to code scanning
+      if: inputs.upload-sarif == 'true' && steps.check.outputs.sarif != ''
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ${{ steps.check.outputs.sarif }}
+        category: pqdoctor

@@ -1,0 +1,41 @@
+name: test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node --test run.test.mjs install.test.mjs
+
+  action:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm, macos-14, windows-2022]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: pq
+        uses: ./
+        with:
+          hosts: |
+            cloudflare.com
+            pqdoctor.com
+          fail-on: never
+      - name: Both hosts are post-quantum
+        shell: bash
+        run: |
+          echo "pq=${{ steps.pq.outputs.pq }} total=${{ steps.pq.outputs.total }}"
+          test "${{ steps.pq.outputs.total }}" = 2
+          test "${{ steps.pq.outputs.pq }}" = 2

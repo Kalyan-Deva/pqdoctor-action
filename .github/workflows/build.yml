@@ -31,6 +31,12 @@ jobs:
       attestations: write
     env:
       V: ${{ inputs.version }}
+      # The release profile of pqdoctor's own workspace (cargo install from a crate doesn't read it).
+      CARGO_PROFILE_RELEASE_OPT_LEVEL: s
+      CARGO_PROFILE_RELEASE_LTO: "true"
+      CARGO_PROFILE_RELEASE_CODEGEN_UNITS: "1"
+      CARGO_PROFILE_RELEASE_PANIC: abort
+      CARGO_PROFILE_RELEASE_STRIP: "true"
     steps:
       - name: Toolchain
         shell: bash

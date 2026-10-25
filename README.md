@@ -1,6 +1,6 @@
 # pqdoctor GitHub Action
 
-Post-quantum TLS checks in CI: which of your hosts negotiate hybrid ML-KEM (X25519MLKEM768), **why the rest don't** — a config change, a TLS library that can't, or a provider's product — with the fix; SARIF for code scanning; regressions since the last run; and an optional push to a [pqdoctor fleet](../../fleet) dashboard.
+Post-quantum TLS checks in CI: which of your hosts negotiate hybrid ML-KEM (X25519MLKEM768), **why the rest don't** — a config change, a TLS library that can't, or a provider's product — with the fix; SARIF for code scanning; regressions since the last run; and an optional push to a [pqdoctor fleet](https://pqdoctor.com/pqdoctor/guides/enterprise/) dashboard.
 
 ```yaml
 name: post-quantum

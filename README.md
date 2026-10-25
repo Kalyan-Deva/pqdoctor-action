@@ -15,7 +15,7 @@ jobs:
   pq:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: Kalyan-Deva/pqdoctor-action@v1
         with:
           hosts-file: pq/hosts.txt          # e.g. from `pqdoctor inventory ct:example.com zone:…`

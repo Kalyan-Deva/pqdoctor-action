@@ -35,7 +35,7 @@ jobs:
 | `fail-on` | `not-pq` | `not-pq`, `not-pq-or-unreachable`, `regression`, `never` |
 | `fingerprint` | `true` | config / library / provider for non-PQ hosts |
 | `certificates` | `true` | each TLS host's chain: does it serve ML-DSA, and would the chain still fit the first flight with it |
-| `version` | `0.3.0` | the pqdoctor release to install |
+| `version` | `0.4.0` | the pqdoctor release to install |
 | `install` | `release` | `release`: the prebuilt binary, **verified against the release's `SHA256SUMS.txt`** before it runs; `source`: build that version from crates.io with cargo (Rust 1.85+) |
 | `upload-sarif` | `false` | upload to code scanning (`security-events: write`) |
 | `comment` | `false` | one PR comment, updated on re-runs (`pull-requests: write`) |

@@ -47,6 +47,6 @@ The last run's records are kept in the Actions cache, so `fail-on: regression` c
 
 ## How the binaries are built
 
-`install: release` downloads from `https://pqdoctor.com/downloads/v<version>/`. The Linux (static musl, x64 + arm64) and macOS (universal) archives are built by this repository's `build` workflow from the published crate (`cargo install pqdoctor --version <v> --locked`), so anyone can check them against the crates.io source; the Windows exe is built the same way. Every file is listed in that release's `SHA256SUMS.txt`, and the action refuses a binary whose hash doesn't match.
+`install: release` downloads from this repository's `pqdoctor-v<version>` release, and from `https://pqdoctor.com/downloads/v<version>/` if that fails (same files). The Linux (static musl, x64 + arm64) and macOS (universal) archives are built by this repository's `build` workflow from the published crate (`cargo install pqdoctor --version <v> --locked`), so anyone can check them against the crates.io source; the Windows exe is built the same way. Every file is listed in that release's `SHA256SUMS.txt`, and the action refuses a binary whose hash doesn't match.
 
 Tests: `node --test run.test.mjs install.test.mjs`; the `test` workflow runs the action itself against live hosts.

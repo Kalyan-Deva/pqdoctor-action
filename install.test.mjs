@@ -12,7 +12,7 @@ test("the right npm package per runner", () => {
   assert.equal(platformPackage("darwin", "arm64"), "@pqdoctor/darwin-universal");
   assert.equal(platformPackage("darwin", "x64"), "@pqdoctor/darwin-universal");
   assert.equal(platformPackage("win32", "x64"), "@pqdoctor/win32-x64");
-  assert.throws(() => platformPackage("aix", "ppc64"), /install: source/);
+  assert.throws(() => platformPackage("aix", "ppc64"), /supported:/);
 });
 
 test("installs exactly the version asked for, with the optional binary", () => {

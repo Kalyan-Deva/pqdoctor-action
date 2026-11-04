@@ -1,6 +1,6 @@
 // Installs pqdoctor for the runner from npm: the `pqdoctor` launcher and the one platform package
-// with the prebuilt binary (built from crates.io by this repository's `build` workflow and published
-// with npm provenance). npm checks every tarball against the registry's SHA-512 integrity hash.
+// with the prebuilt binary for the runner. npm checks every tarball against the registry's SHA-512
+// integrity hash.
 // Node 20+, no dependencies.
 //   node install.mjs <version> <dest-dir>   → prints the binary's path
 import { execFileSync } from "node:child_process";
@@ -12,7 +12,7 @@ export function platformPackage(platform = process.platform, arch = process.arch
   if (platform === "win32") return "@pqdoctor/win32-x64";
   if (platform === "darwin") return "@pqdoctor/darwin-universal";
   if (platform === "linux") return arch === "arm64" ? "@pqdoctor/linux-arm64" : "@pqdoctor/linux-x64";
-  throw new Error(`no prebuilt pqdoctor for ${platform}/${arch} (use install: source)`);
+  throw new Error(`no prebuilt pqdoctor for ${platform}/${arch} (supported: Linux x64/arm64, macOS, Windows)`);
 }
 
 /** The npm command line that installs exactly `version` into `dest`. */

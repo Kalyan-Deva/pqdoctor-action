@@ -27,13 +27,13 @@ inputs:
     required: false
     default: "true"
   version:
-    description: The pqdoctor release to install (prebuilt, verified against the release's SHA256SUMS.txt).
+    description: The pqdoctor version to install (from npm, or from crates.io with install source).
     required: false
     default: "0.4.0"
   install:
-    description: "release (default): download the prebuilt binary. source: build that version from crates.io with cargo (needs Rust 1.85+)."
+    description: "npm (default): the prebuilt binary from npm (`release` means the same). source: build that version from crates.io with cargo (needs Rust 1.85+)."
     required: false
-    default: release
+    default: npm
   upload-sarif:
     description: "true: upload the SARIF to GitHub code scanning (needs `permissions: security-events: write`)."
     required: false
@@ -82,8 +82,8 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Install pqdoctor (prebuilt, checksum-verified)
-      if: inputs.install == 'release'
+    - name: Install pqdoctor (prebuilt, from npm)
+      if: inputs.install == 'npm' || inputs.install == 'release'
       id: release
       shell: bash
       run: echo "bin=$(node "$GITHUB_ACTION_PATH/install.mjs" "${{ inputs.version }}" "$RUNNER_TEMP/pqdoctor-bin")" >> "$GITHUB_OUTPUT"

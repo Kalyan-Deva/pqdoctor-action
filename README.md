@@ -35,8 +35,8 @@ jobs:
 | `fail-on` | `not-pq` | `not-pq`, `not-pq-or-unreachable`, `regression`, `never` |
 | `fingerprint` | `true` | config / library / provider for non-PQ hosts |
 | `certificates` | `true` | each TLS host's chain: does it serve ML-DSA, and would the chain still fit the first flight with it |
-| `version` | `0.4.0` | the pqdoctor release to install |
-| `install` | `release` | `release`: the prebuilt binary, **verified against the release's `SHA256SUMS.txt`** before it runs; `source`: build that version from crates.io with cargo (Rust 1.85+) |
+| `version` | `0.4.0` | the pqdoctor version to install |
+| `install` | `npm` | `npm`: the prebuilt binary from the [`pqdoctor`](https://www.npmjs.com/package/pqdoctor) npm package (`release` is accepted as the old name); `source`: build that version from crates.io with cargo (Rust 1.85+) |
 | `upload-sarif` | `false` | upload to code scanning (`security-events: write`) |
 | `comment` | `false` | one PR comment, updated on re-runs (`pull-requests: write`) |
 | `fleet-url`, `fleet-token`, `owners` | | push the run, its leverage plan and teams to a fleet |
@@ -47,6 +47,6 @@ The last run's records are kept in the Actions cache, so `fail-on: regression` c
 
 ## How the binaries are built
 
-`install: release` downloads from this repository's `pqdoctor-v<version>` release, and from `https://pqdoctor.com/downloads/v<version>/` if that fails (same files). The Linux (static musl, x64 + arm64) and macOS (universal) archives are built by this repository's `build` workflow from the published crate (`cargo install pqdoctor --version <v> --locked`), so anyone can check them against the crates.io source; the Windows exe is built the same way. Every file is listed in that release's `SHA256SUMS.txt`, and the action refuses a binary whose hash doesn't match.
+pqdoctor is distributed only through npm and crates.io. `install: npm` runs `npm install pqdoctor@<version>`, which brings the launcher and the one platform package with the binary for the runner (`@pqdoctor/linux-x64`, `@pqdoctor/linux-arm64`, `@pqdoctor/darwin-universal`, `@pqdoctor/win32-x64`); npm checks each tarball against the registry's integrity hash. Those binaries are built by this repository's `build` workflow from the published crate (`cargo install pqdoctor --version <v> --locked`: Linux static musl, macOS universal, Windows x64), each with a build provenance attestation, and published to npm with provenance, so anyone can trace a binary back to the crates.io source and this workflow run.
 
-Tests: `node --test run.test.mjs install.test.mjs`; the `test` workflow runs the action itself against live hosts.
+Tests: `node --test run.test.mjs install.test.mjs npm/launcher.test.mjs`; the `test` workflow runs the action itself against live hosts.

@@ -1,7 +1,8 @@
 # Builds the pqdoctor release binaries from the published crate (crates.io), so anyone can check
 # them against that source: Linux static musl (x64, arm64), macOS universal (arm64 + x86_64) and
-# Windows x64. Each file gets a build provenance attestation; the release holds SHA256SUMS.txt.
-# The same files are served from https://pqdoctor.com/downloads/v<version>/, which the action uses.
+# Windows x64. Each file gets a build provenance attestation, and the files are published to npm
+# (the `pqdoctor` launcher + one package per platform, npm/build.mjs) with npm provenance.
+# pqdoctor is distributed only through npm and crates.io; there are no downloadable release files.
 name: build
 
 on:
@@ -82,19 +83,28 @@ jobs:
           name: ${{ matrix.asset }}
           path: dist/*
 
-  release:
+  npm:
     needs: build
     runs-on: ubuntu-24.04
     permissions:
-      contents: write
+      contents: read
+      id-token: write
     steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
       - uses: actions/download-artifact@v8
         with:
           path: dist
           merge-multiple: true
       - name: Checksums
         run: cd dist && sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt
-      - name: Release
+      - name: Packages
+        run: node npm/build.mjs --version "${{ inputs.version }}" --from dist --out npm-out
+      - name: Publish
+        # Trusted publishing (OIDC) once it's set up for each package on npmjs.com; NPM_TOKEN until then.
         env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release create "pqdoctor-v${{ inputs.version }}" dist/* --repo "$GITHUB_REPOSITORY" --title "pqdoctor ${{ inputs.version }} binaries" --notes "Built from https://crates.io/crates/pqdoctor/${{ inputs.version }} by the build workflow. Verify with \`sha256sum -c SHA256SUMS.txt\` or \`gh attestation verify <file> --repo $GITHUB_REPOSITORY\`."
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: node npm/publish.mjs npm-out --provenance

@@ -35,7 +35,7 @@ jobs:
 | `fail-on` | `not-pq` | `not-pq`, `not-pq-or-unreachable`, `regression`, `never` |
 | `fingerprint` | `true` | config / library / provider for non-PQ hosts |
 | `certificates` | `true` | each TLS host's chain: does it serve ML-DSA, and would the chain still fit the first flight with it |
-| `version` | `0.4.0` | the pqdoctor version to install |
+| `version` | `0.5.0` | the pqdoctor version to install |
 | `install` | `npm` | the prebuilt binary from the [`pqdoctor`](https://www.npmjs.com/package/pqdoctor) npm package (`release` is accepted as the old name) |
 | `upload-sarif` | `false` | upload to code scanning (`security-events: write`) |
 | `comment` | `false` | one PR comment, updated on re-runs (`pull-requests: write`) |
